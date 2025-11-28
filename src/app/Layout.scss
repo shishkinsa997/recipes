@@ -168,3 +168,50 @@ body {
   color: var(--error-color);
   font-size: 0.875rem;
 }
+
+.user-menu {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+
+  .user-greeting {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+  }
+}
+
+.loading-screen {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+
+  .loading-spinner {
+    font-size: 1.125rem;
+    color: var(--text-secondary);
+  }
+}
+
+.unauthorized {
+  text-align: center;
+  padding: 4rem 2rem;
+
+  h2 {
+    margin: 0 0 1rem 0;
+    color: var(--error-color);
+  }
+
+  p {
+    margin: 0 0 2rem 0;
+    color: var(--text-secondary);
+  }
+
+  a {
+    color: var(--primary-color);
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}

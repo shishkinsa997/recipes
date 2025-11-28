@@ -13,6 +13,7 @@ interface AuthState {
   checkAuth: () => Promise<void>
 }
 
+
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   profile: null,
@@ -26,10 +27,10 @@ export const useAuthStore = create<AuthState>((set) => ({
 
     if (error) throw error
 
-    if (data.user) {
-      set({ user: data.user })
+    set({ user: data.user, isLoading: false })
 
-      // Загружаем профиль
+    // Загружаем профиль
+    if (data.user) {
       const { data: profile } = await supabase
         .from('profiles')
         .select('*')
@@ -53,31 +54,43 @@ export const useAuthStore = create<AuthState>((set) => ({
 
     if (error) throw error
 
-    if (data.user) {
-      set({ user: data.user })
-    }
+    set({ user: data.user, isLoading: false })
   },
 
   signOut: async () => {
     const { error } = await supabase.auth.signOut()
     if (error) throw error
-    set({ user: null, profile: null })
+    set({ user: null, profile: null, isLoading: false })
   },
 
   checkAuth: async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession()
+      console.log('Checking auth...')
+      const { data: { session }, error } = await supabase.auth.getSession()
+
+      if (error) {
+        console.error('Session error:', error)
+        set({ user: null, profile: null, isLoading: false })
+        return
+      }
+
+      console.log('Session:', session)
 
       if (session?.user) {
         set({ user: session.user, isLoading: false })
 
-        const { data: profile } = await supabase
+        // Загружаем профиль
+        const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', session.user.id)
           .single()
 
-        set({ profile })
+        if (profileError) {
+          console.error('Profile error:', profileError)
+        } else {
+          set({ profile })
+        }
       } else {
         set({ user: null, profile: null, isLoading: false })
       }
