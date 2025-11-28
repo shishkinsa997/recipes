@@ -1,4 +1,5 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
+import './Layout.scss';
 
 export function Layout() {
   const location = useLocation();

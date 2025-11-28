@@ -4,6 +4,7 @@ import { Button } from '../../app/components/ui/Button'
 import { Input } from '../../app/components/ui/Input'
 import { ProductForm } from './components/ProductForm'
 import type { Product } from '../../app/types'
+import './GoodsPage.scss'
 
 export function GoodsPage() {
   const { data: products, isLoading, error } = useProducts()
