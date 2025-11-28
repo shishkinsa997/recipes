@@ -231,3 +231,27 @@
     margin: 0 0 1rem 0;
   }
 }
+
+.recipe-card {
+  position: relative;
+
+  &__link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+  }
+
+  &__actions {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    display: flex;
+    gap: 0.5rem;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  &:hover &__actions {
+    opacity: 1;
+  }
+}
