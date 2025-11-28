@@ -1,17 +1,50 @@
-import { Outlet, Link } from 'react-router-dom';
+import { Outlet, Link, useLocation } from 'react-router-dom';
 
 export function Layout() {
+  const location = useLocation();
+
+  const isActive = (path: string) => location.pathname === path;
+
   return (
-    <>
-      <header>
-        <nav>
-          <Link to="/">Recipes</Link>
-          <Link to="/goods">Goods</Link>
+    <div className="layout">
+      <header className="header">
+        <nav className="header__nav">
+          <Link to="/" className="header__logo">
+            🍳 Recipes App
+          </Link>
+          <div className="header__links">
+            <Link
+              to="/"
+              className={`header__link ${isActive('/') ? 'header__link--active' : ''}`}
+            >
+              Recipes
+            </Link>
+            <Link
+              to="/goods"
+              className={`header__link ${isActive('/goods') ? 'header__link--active' : ''}`}
+            >
+              Goods
+            </Link>
+            <Link
+              to="/profile"
+              className={`header__link ${isActive('/profile') ? 'header__link--active' : ''}`}
+            >
+              Profile
+            </Link>
+            <Link
+              to="/settings"
+              className={`header__link ${isActive('/settings') ? 'header__link--active' : ''}`}
+            >
+              Settings
+            </Link>
+          </div>
         </nav>
       </header>
-      <main>
-        <Outlet />
+      <main className="main">
+        <div className="container">
+          <Outlet />
+        </div>
       </main>
-    </>
+    </div>
   );
 }
