@@ -1,5 +1,13 @@
 
-# **Техническое задание: Recipes App**
+# **Recipes App**
+
+---
+
+## 0. **Deploy**
+
+[Recipes App](https://github.com/shishkinsa997/recipes)
+
+---
 
 ## 1. **Описание проекта**
 
