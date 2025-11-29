@@ -5,7 +5,7 @@
 
 ## 0. **Deploy**
 
-[Recipes App](https://github.com/shishkinsa997/recipes)
+[Recipes App](https://recipes-gilt-nine.vercel.app/)
 
 ---
 
