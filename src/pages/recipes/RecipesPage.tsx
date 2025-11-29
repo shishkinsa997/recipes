@@ -1,17 +1,20 @@
-import { useState, useMemo } from 'react'
-import { useRecipes, useCreateRecipe, useUpdateRecipe, useDeleteRecipe } from '../../app/hooks/useRecipes'
+import { useState, useMemo, useEffect, useCallback } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { useRecipes, useDeleteRecipe, useCreateRecipeWithIngredients, useUpdateRecipeWithIngredients } from '../../app/hooks/useRecipes'
 import { Button } from '../../app/components/ui/Button'
 import { RecipeCard } from './components/RecipeCard'
 import { SearchBar } from './components/SearchBar'
 import { FilterPanel, type RecipeFilters } from './components/FilterPanel'
 import { RecipeForm } from './components/RecipeForm'
-import type { Recipe, RecipeIngredient } from '../../app/types'
+import { recipeService } from '../../app/services/recipeService'
+import type { Recipe, RecipeIngredient, Product } from '../../app/types'
 import './RecipesPage.scss'
 
 export function RecipesPage() {
+  const [searchParams, setSearchParams] = useSearchParams()
   const { data: recipes, isLoading, error } = useRecipes()
-  const createRecipeMutation = useCreateRecipe()
-  const updateRecipeMutation = useUpdateRecipe()
+  const createRecipeMutation = useCreateRecipeWithIngredients()
+  const updateRecipeMutation = useUpdateRecipeWithIngredients()
   const deleteRecipeMutation = useDeleteRecipe()
 
   const [searchTerm, setSearchTerm] = useState('')
@@ -20,9 +23,36 @@ export function RecipesPage() {
     sortOrder: 'desc',
   })
   const [isFormOpen, setIsFormOpen] = useState(false)
-  const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null)
+  const [editingRecipe, setEditingRecipe] = useState<(Recipe & { ingredients?: (RecipeIngredient & { product: Product })[] }) | null>(null)
 
-  // Функция для сортировки рецептов
+  const handleEditRecipe = useCallback(async (recipe: Recipe) => {
+    try {
+      const fullRecipeData = await recipeService.getRecipeById(recipe.id)
+      setEditingRecipe({
+        ...fullRecipeData.recipe,
+        ingredients: fullRecipeData.ingredients
+      })
+      setIsFormOpen(true)
+    } catch (err) {
+      console.error('Failed to load recipe details:', err)
+      setEditingRecipe(recipe)
+      setIsFormOpen(true)
+    }
+  }, [])
+
+  useEffect(() => {
+    const editId = searchParams.get('edit')
+    if (editId && recipes && !isFormOpen) {
+      const recipeToEdit = recipes.find(r => r.id === editId)
+      if (recipeToEdit) {
+        setTimeout(() => {
+          handleEditRecipe(recipeToEdit)
+        }, 0)
+        setSearchParams({}, { replace: true })
+      }
+    }
+  }, [searchParams, recipes, isFormOpen, handleEditRecipe, setSearchParams])
+
   const sortRecipes = (recipesToSort: Recipe[], sortBy: string, sortOrder: 'asc' | 'desc') => {
     return [...recipesToSort].sort((a, b) => {
       if (sortBy === 'title') {
@@ -51,7 +81,6 @@ export function RecipesPage() {
     })
   }
 
-  // Фильтрация и сортировка рецептов
   const filteredRecipes = useMemo(() => {
     if (!recipes) return []
 
@@ -60,22 +89,15 @@ export function RecipesPage() {
       recipe.description?.toLowerCase().includes(searchTerm.toLowerCase())
     )
 
-    // Фильтрация по цене с проверкой на undefined
     if (filters.maxPrice !== undefined) {
       result = result.filter(recipe => recipe.final_price <= filters.maxPrice!)
     }
 
-    // Сортировка
     return sortRecipes(result, filters.sortBy, filters.sortOrder)
   }, [recipes, searchTerm, filters])
 
   const handleCreateRecipe = () => {
     setEditingRecipe(null)
-    setIsFormOpen(true)
-  }
-
-  const handleEditRecipe = (recipe: Recipe) => {
-    setEditingRecipe(recipe)
     setIsFormOpen(true)
   }
 
@@ -100,10 +122,20 @@ export function RecipesPage() {
       if (editingRecipe) {
         await updateRecipeMutation.mutateAsync({
           id: editingRecipe.id,
-          updates: recipeData.recipe
+          updates: recipeData.recipe,
+          ingredients: recipeData.ingredients.map(ing => ({
+            ...ing,
+            recipe_id: editingRecipe.id
+          }))
         })
       } else {
-        await createRecipeMutation.mutateAsync(recipeData.recipe)
+        await createRecipeMutation.mutateAsync({
+          recipe: recipeData.recipe,
+          ingredients: recipeData.ingredients.map(ing => ({
+            ...ing,
+            recipe_id: 'temp-id'
+          }))
+        })
       }
       setIsFormOpen(false)
       setEditingRecipe(null)
@@ -114,7 +146,6 @@ export function RecipesPage() {
     }
   }
 
-  // Проверяем, применены ли какие-либо фильтры (для отображения состояния)
   const hasActiveFilters = searchTerm !== '' || filters.maxPrice !== undefined
 
   if (error) {

@@ -22,7 +22,6 @@ export function Layout() {
     }
   }
 
-  // Временно уберем loading screen для отладки
   if (isLoading) {
     return (
       <div className="loading-screen">
@@ -55,18 +54,32 @@ export function Layout() {
             </Link>
 
             {user ? (
-              <div className="user-menu">
-                <span className="user-greeting">
-                  Hello, {profile?.username || user.email}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleSignOut}
+              <>
+                <Link
+                  to="/profile"
+                  className={`header__link ${isActive('/profile') ? 'header__link--active' : ''}`}
                 >
-                  Sign Out
-                </Button>
-              </div>
+                  Profile
+                </Link>
+                <Link
+                  to="/settings"
+                  className={`header__link ${isActive('/settings') ? 'header__link--active' : ''}`}
+                >
+                  Settings
+                </Link>
+                <div className="user-menu">
+                  <span className="user-greeting">
+                    Hello, {profile?.username || user.email}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSignOut}
+                  >
+                    Sign Out
+                  </Button>
+                </div>
+              </>
             ) : (
               <Link
                 to="/auth"

@@ -1,8 +1,8 @@
 import { supabase } from './supabase'
 import type { Recipe, RecipeIngredient, Product } from '../types'
+import { ingredientService } from './ingredientService'
 
 export const recipeService = {
-  // Получить все рецепты
   async getRecipes(): Promise<Recipe[]> {
     const { data, error } = await supabase
       .from('recipes')
@@ -16,7 +16,6 @@ export const recipeService = {
     return data || []
   },
 
-  // Получить рецепт по ID с ингредиентами
   async getRecipeById(id: string): Promise<{ recipe: Recipe; ingredients: (RecipeIngredient & { product: Product })[] }> {
     const { data: recipe, error: recipeError } = await supabase
       .from('recipes')
@@ -28,7 +27,6 @@ export const recipeService = {
       throw new Error(`Failed to fetch recipe: ${recipeError.message}`)
     }
 
-    // Получаем ингредиенты с информацией о продуктах
     const { data: ingredients, error: ingredientsError } = await supabase
       .from('recipe_ingredients')
       .select(`
@@ -47,7 +45,6 @@ export const recipeService = {
     }
   },
 
-  // Создать рецепт
   async createRecipe(recipe: Omit<Recipe, 'id' | 'created_at' | 'updated_at'>): Promise<Recipe> {
     const { data, error } = await supabase
       .from('recipes')
@@ -62,7 +59,31 @@ export const recipeService = {
     return data
   },
 
-  // Обновить рецепт
+  async createRecipeWithIngredients(data: {
+    recipe: Omit<Recipe, 'id' | 'created_at' | 'updated_at'>
+    ingredients: Omit<RecipeIngredient, 'id' | 'created_at' | 'recipe_id'>[]
+  }): Promise<Recipe> {
+    const createdRecipe = await this.createRecipe(data.recipe)
+
+    if (data.ingredients.length > 0) {
+      const ingredientsToInsert = data.ingredients.map(ing => ({
+        ...ing,
+        recipe_id: createdRecipe.id
+      }))
+
+      const { error: ingredientsError } = await supabase
+        .from('recipe_ingredients')
+        .insert(ingredientsToInsert)
+
+      if (ingredientsError) {
+        await this.deleteRecipe(createdRecipe.id)
+        throw new Error(`Failed to create ingredients: ${ingredientsError.message}`)
+      }
+    }
+
+    return createdRecipe
+  },
+
   async updateRecipe(id: string, updates: Partial<Recipe>): Promise<Recipe> {
     const { data, error } = await supabase
       .from('recipes')
@@ -78,7 +99,33 @@ export const recipeService = {
     return data
   },
 
-  // Удалить рецепт
+  async updateRecipeWithIngredients(data: {
+    id: string
+    updates: Partial<Recipe>
+    ingredients: Omit<RecipeIngredient, 'id' | 'created_at'>[]
+  }): Promise<Recipe> {
+    const updatedRecipe = await this.updateRecipe(data.id, data.updates)
+
+    await ingredientService.deleteRecipeIngredients(data.id)
+
+    if (data.ingredients.length > 0) {
+      const ingredientsToInsert = data.ingredients.map(ing => ({
+        ...ing,
+        recipe_id: data.id
+      }))
+
+      const { error: ingredientsError } = await supabase
+        .from('recipe_ingredients')
+        .insert(ingredientsToInsert)
+
+      if (ingredientsError) {
+        throw new Error(`Failed to update ingredients: ${ingredientsError.message}`)
+      }
+    }
+
+    return updatedRecipe
+  },
+
   async deleteRecipe(id: string): Promise<void> {
     const { error } = await supabase
       .from('recipes')
@@ -90,7 +137,6 @@ export const recipeService = {
     }
   },
 
-  // Поиск рецептов
   async searchRecipes(query: string): Promise<Recipe[]> {
     const { data, error } = await supabase
       .from('recipes')

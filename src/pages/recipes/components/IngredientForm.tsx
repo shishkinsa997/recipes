@@ -16,7 +16,6 @@ export function IngredientForm({
   onCancel,
   isEditing = false
 }: IngredientFormProps) {
-  // Вычисляем начальное состояние на основе props
   const initialFormData = {
     product_id: ingredient?.product_id || '',
     quantity: ingredient?.quantity || 1,
@@ -27,11 +26,8 @@ export function IngredientForm({
   const [formData, setFormData] = useState(initialFormData)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  // Вычисляем общую стоимость
   const totalPrice = formData.quantity * formData.price
 
-  // Обновляем форму при изменении props через key
-  // React автоматически пересоздаст компонент при изменении ingredient
   const formKey = ingredient?.id || 'new'
 
   const validateForm = () => {
@@ -56,9 +52,9 @@ export function IngredientForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (validateForm() && ingredient) {
+    if (validateForm()) {
       onSave({
-        recipe_id: ingredient.recipe_id,
+        recipe_id: ingredient?.recipe_id || 'temp-recipe-id',
         product_id: formData.product_id,
         quantity: formData.quantity,
         measure: formData.measure,
@@ -82,7 +78,6 @@ export function IngredientForm({
     }
   }
 
-  // Автоматически обновляем цену при выборе продукта
   const handleProductChange = (productId: string) => {
     const selectedProduct = products.find(p => p.id === productId)
     if (selectedProduct) {
@@ -154,7 +149,6 @@ export function IngredientForm({
         </div>
       </div>
 
-      {/* Остальной код без изменений */}
       <div className="ingredient-form__row">
         <div className="form-group">
           <label className="form-label">Price per unit</label>

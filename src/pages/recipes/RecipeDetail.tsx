@@ -11,13 +11,9 @@ export function RecipeDetail() {
   const { data, isLoading, error } = useRecipe(id!)
   const deleteRecipeMutation = useDeleteRecipe()
 
-  const [servings, setServings] = useState(2)
-
-  useState(() => {
-    if (data?.recipe.servings) {
-      setServings(data.recipe.servings)
-    }
-  })
+  const recipeKey = data?.recipe.id || 'loading'
+  const baseServings = data?.recipe.servings || 2
+  const [currentServings, setCurrentServings] = useState(baseServings)
 
   const handleDelete = async () => {
     if (window.confirm('Are you sure you want to delete this recipe?')) {
@@ -32,23 +28,21 @@ export function RecipeDetail() {
   }
 
   const handleEdit = () => {
-    // Пока просто возвращаем на главную, позже добавим редактирование
-    navigate('/')
+    navigate(`/?edit=${id}`)
   }
 
-  // Пересчет ингредиентов на основе выбранного количества порций
   const calculatedIngredients = useMemo(() => {
     if (!data?.ingredients) return []
 
     const baseServings = data.recipe.servings
-    const ratio = servings / baseServings
+    const ratio = currentServings / baseServings
 
     return data.ingredients.map(ingredient => ({
       ...ingredient,
       calculatedQuantity: ingredient.quantity * ratio,
       calculatedTotalPrice: ingredient.total_price * ratio
     }))
-  }, [data, servings])
+  }, [data, currentServings])
 
   const totalCost = useMemo(() =>
     calculatedIngredients.reduce((sum, ingredient) => sum + ingredient.calculatedTotalPrice, 0),
@@ -74,7 +68,7 @@ export function RecipeDetail() {
   const { recipe } = data
 
   return (
-    <div className="recipe-detail">
+    <div key={recipeKey} className="recipe-detail">
       <div className="recipe-detail__header">
         <Link to="/" className="back-button">
           ← Back to Recipes
@@ -112,8 +106,8 @@ export function RecipeDetail() {
               id="servings"
               type="number"
               min="1"
-              value={servings}
-              onChange={(e) => setServings(Number(e.target.value))}
+              value={currentServings}
+              onChange={(e) => setCurrentServings(Number(e.target.value))}
             />
           </div>
 
@@ -128,7 +122,7 @@ export function RecipeDetail() {
             </div>
             <div className="meta-item">
               <span className="meta-label">Cost per serving:</span>
-              <span className="meta-value">${(totalCost / servings).toFixed(2)}</span>
+              <span className="meta-value">${(totalCost / currentServings).toFixed(2)}</span>
             </div>
           </div>
         </div>

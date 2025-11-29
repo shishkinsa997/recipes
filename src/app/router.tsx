@@ -7,6 +7,7 @@ import { Profile } from '../pages/profile/Profile';
 import { Auth } from '../pages/auth/Auth';
 import { Settings } from '../pages/settings/Settings';
 import { NotFound } from '../pages/NotFound';
+import { ProtectedRoute } from '../pages/auth/ProtectedRoute';
 
 export const router = createBrowserRouter([
   {
@@ -16,9 +17,23 @@ export const router = createBrowserRouter([
       { index: true, element: <RecipesPage /> },
       { path: 'goods', element: <GoodsPage /> },
       { path: 'recipe/:id', element: <RecipeDetail /> },
-      { path: 'profile', element: <Profile /> },
+      {
+        path: 'profile',
+        element: (
+          <ProtectedRoute>
+            <Profile />
+          </ProtectedRoute>
+        ),
+      },
       { path: 'auth', element: <Auth /> },
-      { path: 'settings', element: <Settings /> },
+      {
+        path: 'settings',
+        element: (
+          <ProtectedRoute>
+            <Settings />
+          </ProtectedRoute>
+        ),
+      },
       { path: '*', element: <NotFound /> },
     ],
   },

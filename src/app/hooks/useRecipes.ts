@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { recipeService } from '../services/recipeService'
-import type { Recipe } from '../types'
+import type { Recipe, RecipeIngredient } from '../types'
 
 export const useRecipes = () => {
   return useQuery({
@@ -55,6 +55,36 @@ export const useDeleteRecipe = () => {
     mutationFn: recipeService.deleteRecipe,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recipes'] })
+    },
+  })
+}
+
+export const useCreateRecipeWithIngredients = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: {
+      recipe: Omit<Recipe, 'id' | 'created_at' | 'updated_at'>
+      ingredients: Omit<RecipeIngredient, 'id' | 'created_at' | 'recipe_id'>[]
+    }) => recipeService.createRecipeWithIngredients(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['recipes'] })
+    },
+  })
+}
+
+export const useUpdateRecipeWithIngredients = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: {
+      id: string
+      updates: Partial<Recipe>
+      ingredients: Omit<RecipeIngredient, 'id' | 'created_at'>[]
+    }) => recipeService.updateRecipeWithIngredients(data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['recipes'] })
+      queryClient.invalidateQueries({ queryKey: ['recipes', variables.id] })
     },
   })
 }
